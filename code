@@ -1,0 +1,157 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn import svm
+from sklearn import metrics
+from sklearn.metrics import classification_report
+df = pd.read_csv('/content/train_u6lujuX_CVtuZ9i (1).csv')
+df.head()
+df.shape
+df.info()df.isnull().sum()
+df.describe()
+fig, ax = plt.subplots(1,3, figsize=(10,4))
+sns.histplot(df.LoanAmount, ax=ax[0])
+sns.histplot(df.Loan_Amount_Term, ax=ax[1])
+sns.histplot(df.ApplicantIncome, ax=ax[2])
+plt.tight_layout()
+fig.show()
+df['Gender'].fillna(df['Gender'].mode()[0],inplace=True)
+df['Married'].fillna(df['Married'].mode()[0],inplace= True)
+df['Dependents'].fillna(df['Dependents'].mode()[0],inplace= True)
+df['Self_Employed'].fillna(df['Self_Employed'].mode()[0],inplace= True)
+df['Credit_History'].fillna(df['Credit_History'].mode()[0],inplace=True)
+df['Loan_Amount_Term'].fillna(df['Loan_Amount_Term'].mode()[0],inplace=True)
+df['LoanAmount'].fillna(df['LoanAmount'].median(),inplace=True)
+df.head()
+df_gender = df.groupby('Gender').mean()
+df_gender
+fig, ax = plt.subplots(2, 3, figsize=(20, 10))
+
+# Plot countplot for 'Married'
+ax[0, 0].set_title("Married")
+sns.countplot(x='Gender', hue='Married', data=df, ax=ax[0, 0])
+total = float(len(df['Married']))
+for p in ax[0, 0].patches:
+    height = p.get_height()
+    ax[0, 0].text(p.get_x() + p.get_width() / 2., height + 3, '{:.2f}%'.format((height / total) * 100), ha="center")
+
+# Plot countplot for 'Dependents'
+ax[0, 1].set_title("Dependents")
+sns.countplot(x='Gender', hue='Dependents', data=df, ax=ax[0, 1])
+total = float(len(df['Dependents']))
+for p in ax[0, 1].patches:
+    height = p.get_height()
+    ax[0, 1].text(p.get_x() + p.get_width() / 2., height + 3, '{:.2f}%'.format((height / total) * 100), ha="center")
+
+# Plot countplot for 'Education'
+ax[0, 2].set_title("Education")
+sns.countplot(x='Gender', hue='Education', data=df, ax=ax[0, 2])
+total = float(len(df['Education']))
+for p in ax[0, 2].patches:
+    height = p.get_height()
+    ax[0, 2].text(p.get_x() + p.get_width() / 2., height + 3, '{:.2f}%'.format((height / total) * 100), ha="center")
+
+# Plot countplot for 'Self_Employed'
+ax[1, 0].set_title("Self Employed")
+sns.countplot(x='Gender', hue='Self_Employed', data=df, ax=ax[1, 0])
+total = float(len(df['Self_Employed']))
+for p in ax[1, 0].patches:
+    height = p.get_height()
+    ax[1, 0].text(p.get_x() + p.get_width() / 2., height + 3, '{:.2f}%'.format((height / total) * 100), ha="center")
+
+# Plot countplot for 'Property_Area'
+ax[1, 1].set_title("Property Area")
+sns.countplot(x='Gender', hue='Property_Area', data=df, ax=ax[1, 1])
+total = float(len(df['Property_Area']))
+for p in ax[1, 1].patches:
+    height = p.get_height()
+    ax[1, 1].text(p.get_x() + p.get_width() / 2., height + 3, '{:.2f}%'.format((height / total) * 100), ha="center")
+
+# Plot countplot for 'Loan_Status'
+ax[1, 2].set_title("Loan Status")
+sns.countplot(x='Gender', hue='Loan_Status', data=df, ax=ax[1, 2])
+total = float(len(df['Loan_Status']))
+for p in ax[1, 2].patches:
+    height = p.get_height()
+    ax[1, 2].text(p.get_x() + p.get_width() / 2., height + 3, '{:.2f}%'.format((height / total) * 100), ha="center")
+
+plt.tight_layout()
+plt.show()
+fig, ax = plt.subplots(2,2, figsize=(20,10))
+sns.histplot(data=df, x='ApplicantIncome', hue='Gender', kde=True, ax=ax[0,0])
+sns.histplot(data=df, x='CoapplicantIncome', hue='Gender', kde=True, ax=ax[0,1])
+sns.histplot(data=df, x='LoanAmount', hue='Gender', kde=True, ax=ax[1,0])
+sns.histplot(data=df, x='Loan_Amount_Term', hue='Gender', kde=True, ax=ax[1,1])
+from sklearn.preprocessing import LabelEncoder
+
+def label_encoder(column):
+    le = LabelEncoder().fit(column)
+    print(column.name, le.classes_)
+    return le.transform(column)
+
+categorical = ['Gender', 'Married', 'Dependents', 'Education', 'Self_Employed', 'Property_Area', 'Loan_Status']
+
+for col in categorical:
+    df[col] = label_encoder(df[col])
+df.head()
+corr_matrix = df.corr()
+fig, ax = plt.subplots(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, fmt = '.2f', annot_kws = {'fontsize': 7})
+plt.tight_layout()
+plt.show()
+X = df.drop(columns=['Loan_ID','Loan_Status'], axis = 1)
+Y = df['Loan_Status']
+print(X)
+print(Y)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.2, stratify = Y, random_state = 42)
+model = svm.SVC(kernel = 'linear')
+model.fit(X_train,Y_train)
+# Evaluating the model
+
+Y_train_preds = model.predict(X_train)
+
+print("Accuracy on training data: ", metrics.accuracy_score(Y_train, Y_train_preds))
+print("Precision on training data:", metrics.precision_score(Y_train, Y_train_preds))
+print("Recall on training data:", metrics.recall_score(Y_train, Y_train_preds))
+Y_test_preds = model.predict(X_test)
+
+print('Accuracy on testing data: ', metrics.accuracy_score(Y_test, Y_test_preds))
+print('Precision on testing data: ', metrics.precision_score(Y_test, Y_test_preds))
+print('Recall on testing data: ', metrics.recall_score(Y_test, Y_test_preds))
+
+cm = metrics.confusion_matrix(Y_test, Y_test_preds)
+TN, FP, FN, TP = cm.ravel()
+print('TN={0}, FP={1}, FN={2}, TP={3}'.format(TN, FP, FN, TP))
+
+disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm)
+disp.plot()
+plt.show()
+print(classification_report(Y_test,Y_test_preds))
+X_train_gb = X_train.drop(columns=['Gender'])
+X_test_gb = X_test.drop(columns=['Gender'])
+model_gb = svm.SVC(kernel='linear')
+model_gb.fit(X_train_gb,Y_train)
+Y_train_preds_gb = model_gb.predict(X_train_gb)
+
+print("Accuracy on train data: ", metrics.accuracy_score(Y_train, Y_train_preds_gb))
+print("Precision using train data:", metrics.precision_score(Y_train, Y_train_preds_gb))
+print("Recall using train data:", metrics.recall_score(Y_train, Y_train_preds_gb))
+Y_test_preds_gb = model_gb.predict(X_test_gb)
+
+print("Accuracy on test data: ", metrics.accuracy_score(Y_test, Y_test_preds_gb))
+print("Precision using test data:", metrics.precision_score(Y_test, Y_test_preds_gb))
+print("Recall on testing data: ", metrics.recall_score(Y_test, Y_test_preds_gb))
+
+cm_gb = metrics.confusion_matrix(Y_test, Y_test_preds_gb)
+TN, FP, FN, TP = cm_gb.ravel()
+print('TN={0}, FP={1}, FN={2}, TP={3}'.format(TN, FP, FN, TP))
+
+disp_gb = metrics.ConfusionMatrixDisplay(confusion_matrix = cm_gb)
+disp_gb.plot()
+plt.show()
+print(classification_report(Y_test,Y_test_preds_gb))
+
+  
